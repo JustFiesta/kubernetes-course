@@ -1,0 +1,70 @@
+---
+- hosts: all 
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Install packages
+      package:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+
+    - name: Install certs directory
+      shell: install -m 0755 -d /etc/apt/keyrings
+      args:
+        executable: /bin/bash
+
+    - name: Get Docker GPG key
+      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+      args:
+        executable: /bin/bash
+
+    - name: Set permissions on Docker GPG key
+      file:
+        path: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Install Docker repository
+      shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      args:
+        executable: /bin/bash
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+      notify: docker installed
+    
+    - name: Ensure docker group exists
+      group:
+        name: docker
+        state: present
+
+    - name: Add cloud_user to docker group
+      user:
+        name: cloud_user
+        groups: docker
+        append: yes
+
+    - name: Inform user to run newgrp docker
+      debug:
+        msg: "Please run 'newgrp docker' to apply the group changes for cloud_user."
+
+  handlers:
+    - name: run and enable docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      listen: docker installed
