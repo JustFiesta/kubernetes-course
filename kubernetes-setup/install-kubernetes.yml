@@ -1,0 +1,77 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install required packages
+      package:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Add Kubernetes apt repository GPG key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add Kubernetes apt repository
+      apt_repository:
+        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+        state: present
+
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    - name: Install kubeadm, kubelet and kubectl
+      apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+        update_cache: yes
+
+    - name: Hold kubeadm, kubelet and kubectl at current version
+      apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+        update_cache: yes
+        force: yes
+      register: result
+
+    - name: Ensure kubelet service is enabled and started
+      service:
+        name: kubelet
+        enabled: yes
+        state: started
+
+  post_tasks:
+    - name: Initialize Kubernetes cluster with kubeadm (only on master)
+      command: kubeadm init
+      when: "'master' in group_names"
+      register: kubeadm_init
+
+    - name: Set up local kubeconfig (only on master)
+      command: |
+        mkdir -p $HOME/.kube &&
+        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config &&
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+      when: "'master' in group_names"
+      become: false
+
+    - name: Install Calico network plugin (only on master)
+      command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+      when: "'master' in group_names"
+
+    - name: Join worker nodes to the cluster
+      shell: "{{ item }}"
+      with_items:
+        - kubeadm join --token {{ kubeadm_init.results[0].stdout_lines[-1] }} {{ hostvars[groups['master'][0]].ansible_default_ipv4.address }}:6443 --discovery-token-ca-cert-hash sha256:{{ kubeadm_init.results[1].stdout_lines[-1] }}
+      when: "'workers' in group_names"
