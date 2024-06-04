@@ -254,3 +254,25 @@ kubectl exec busybox -- curl -s store-products
 ```
 
 [Busybox creation](https://rjshree.medium.com/how-to-get-busybox-image-running-in-kubernetes-cluster-ac3e10fddcf7)
+
+<hr>
+
+### Microservices - where Kubernetes shine
+
+Deployment of microservice application:
+
+0. Create cluster and networking
+
+1. clone repository with k8s YAML descriptors ([example repository](https://github.com/linuxacademy/robot-shop))
+
+2. Create namespace (`kubectl create namespace test-namespace`)
+
+3. Install app in cluster (`kubectl -n test-namespace create -f ~/gh-repo/K8s/descriptors/`)
+
+4. Get list of app pods and let them finish starting up (`kubectl get pods -n robot-shop -w`, namespace needs to be specified!)
+
+5. App should run (in case of robot-shop, on port: )
+
+NOTES: Descriptors can be edited, eg. `kubectl edit deployment mongodb -n robot-shop` or vim into descriptor file.
+
+Replicas can be checked via `kubectl get deployment mongodb -n robot-shop`
