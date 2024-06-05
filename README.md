@@ -276,3 +276,40 @@ Deployment of microservice application:
 NOTES: Descriptors can be edited, eg. `kubectl edit deployment mongodb -n robot-shop` or vim into descriptor file.
 
 Replicas can be checked via `kubectl get deployment mongodb -n robot-shop`
+
+<hr>
+
+#### Helm
+
+Helm is a Kubernetes package manager. Operates on charts with are blueprints for Deploment/service and other descriptors. They are like packages for kubernetes.
+
+It supports templating via GO Templating. (Templating like jinja2 but start with `.Values.other_subcategory`, where Values is values.yaml file).
+
+Descriptors can be changes to helm charts. Chart needs to has its own directory, with Chart.yaml, templates/ and values.yaml (minimal setup). Also one can craete chart sketch by running `helm create chart $chartName`.
+
+#### Chart releases
+
+Charts also have releases. One can change it manually inside Chart.yaml file.
+
+Or update running chart: `helm upgrade $chartName -set alpineimage=1.1.6`
+
+<hr>
+
+#### Convert Kubernetes manifest file into Helm Chart
+
+After minimal chart is created, move manifest file into `chartName/templates/`.
+
+Here one can add templating functionality to manifest, using GO templating.
+
+Now after Chart.yaml, values.yaml and template/serviceName.yaml are configured properly, command `helm install $chartName --dry-run` shlould output the same service manifest as Kubernetes one, but with dynamic values.
+
+<hr>
+
+#### Helm Debugging and other commands
+
+* Check Helm status (current state of releases): `helm status`
+* See setted values: `helm show values $chartName`
+* Dry run chart: `helm install $chartName --dry-run`
+* Install chart (package): `helm install $chartName`
+* Get chart from repo: `helm fetch $chartName`
+* Add Helm repository: `helm repo add $name $url`
