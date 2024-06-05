@@ -16,7 +16,7 @@ This repository contains excercises with Kubernetes.
 
 <hr>
 
-## Cluster creation
+### Cluster creation
 
 1. Setup cluster on master node with:
 
@@ -97,7 +97,7 @@ This repository contains excercises with Kubernetes.
 
 <hr>
 
-## Network setup
+### Network setup
 
 For this setup the Flannel solution is used.
 
@@ -117,7 +117,7 @@ For this setup the Flannel solution is used.
 
 <hr>
 
-### Containers vs pods
+## Containers vs pods
 
 * Pods are the smallest building blocks in Kubernetes module. Usully pod contains one container (but can use more).
 
@@ -150,7 +150,7 @@ NOTE: Every Kubernetes object is in some namespace, eg. kubernetes backend pods:
 
 <hr>
 
-### Clusters and Nodes
+## Clusters and Nodes
 
 As in ansible Nodes divide into two groups: Controllers and Workers. Each type of nodes migh be deployed multiple times.
 
@@ -159,7 +159,7 @@ As in ansible Nodes divide into two groups: Controllers and Workers. Each type o
 
 <hr>
 
-### Networking in kubernetes
+## Networking in kubernetes
 
 Kubernetes cluster creates virtual network witch contains all nodes. It's separete from phisical network.
 
@@ -167,7 +167,7 @@ So pods don't know they are ran on separated machines (nodes)
 
 <hr>
 
-### Kubernetes architecture
+## Kubernetes architecture
 
 By using `kubectl get pods -n kube-system` all kubernetes system pods are shown, witch helps understand kubernetes architecture.
 
@@ -184,15 +184,18 @@ In addition, each node has: kubelet  (service for running pods) and kube-proxy
 
 <hr>
 
-### Deploying applications with Kuberneter deployments
+## Deploying applications with Kuberneter deployments
 
 After managing single pods there is a deployment management.
 
 Deployment is a automation for pods, it allows to specify desired state for set of pods. The cluster then will maintain the desired state.
 
 Other functionality:
+
 * Scaling - scaling up/down replicas, and deployment will meet that number
+
 * Rolling updates - gradual updates for new versions of image (app). It will gradually replace existing containers with new version
+
 * Self-Healing - deployment is watching over existing pods and desired state. After pod is down it will spin up new one to replace it.
 
 Simple Deployment:
@@ -243,13 +246,11 @@ spec:
 EOF
 ```
 
-
 NOTE: Services are another kind of load balancing in kubernetes network model. They combine pods into single "service"
-
 
 Use busybox pod to check if service is running correctly:
 
-```
+```shell
 kubectl exec busybox -- curl -s store-products
 ```
 
@@ -257,7 +258,7 @@ kubectl exec busybox -- curl -s store-products
 
 <hr>
 
-### Microservices - where Kubernetes shine
+## Microservices - where Kubernetes shine
 
 Deployment of microservice application:
 
@@ -279,7 +280,7 @@ Replicas can be checked via `kubectl get deployment mongodb -n robot-shop`
 
 <hr>
 
-#### Helm
+## Helm
 
 Helm is a Kubernetes package manager. Operates on charts with are blueprints for Deploment/service and other descriptors. They are like packages for kubernetes.
 
@@ -289,7 +290,7 @@ Descriptors can be changes to helm charts. Chart needs to has its own directory,
 
 Also charts can contain dependencies (subcharts) stored in template folder.
 
-#### Chart releases
+### Chart releases
 
 Release is a running chart. But also a normal release number.
 
@@ -299,7 +300,7 @@ Or update running chart: `helm upgrade $chartName -set alpineimage=1.1.6`
 
 <hr>
 
-#### Convert Kubernetes manifest file into Helm Chart
+### Convert Kubernetes manifest file into Helm Chart
 
 After minimal chart is created, move manifest file into `chartName/templates/`.
 
@@ -309,20 +310,20 @@ Now after Chart.yaml, values.yaml and template/serviceName.yaml are configured p
 
 <hr>
 
-#### Helm Debugging and other commands
+### Helm Debugging and other commands
 
 * Check Helm status (current state of releases): `helm status`
 * See setted values: `helm show values $chartName`
 * Dry run chart: `helm install $chartName --dry-run`
 * Install chart (package): `helm install $chartName`
-* Get chart from repo: `helm fetch $chartName`
+* Get chart from repo: `helm fetch $chartName` - it downloads the tarball of chart
 * Add Helm repository: `helm repo add $name $url`
 
 Also charts can be rollbacked to previous versions.
 
 <hr>
 
-#### Pre- and post- actions with hooks
+### Pre- and post- actions with hooks
 
 Like in git, hooks can run after some action.
 
@@ -343,3 +344,165 @@ They can:
 * Manipulate data
 
 * Stage data
+
+#### Hook chart example
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: posthooktainer
+  annotations:
+    "helm.sh/hook": "post-install"
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  containers:
+  - name: hooktainer
+    image: busybox
+    imagePullPolicy: IfNotPresent
+    command: ['sh', '-c', 'echo post-install hook Pod is running && sleep 10']
+  restartPolicy: Never
+  terminationGracePeriodSeconds: 0
+```
+
+[More on hooks](https://helm.sh/docs/topics/charts_hooks/)
+
+<hr>
+
+### Testing charts
+
+In helm charts can be tested by special hook, with creates container with running command to assert condition.
+
+This can be used to check state, configuration, validation.
+
+Test hooks are stored in `chartName/templates/tests/test-something.yaml`.
+
+#### To run tests use: `helm test releaseName`
+
+[More on tests](https://helm.sh/docs/topics/chart_tests/)
+
+<hr>
+
+### Creating and using libraries
+
+Library is a shared template, used to avoid code repetition.
+
+To use library:
+
+1. In Chart.yaml specify dependency on library:
+
+    ```yaml
+    ...
+    decription: ...
+    dependencies:
+    - name: common
+    version: "^0.0.5"
+    repository: "https://charts.helm.sh/incubator/"
+    ```
+
+2. In chart directory (`chartName/`) run:
+
+    `helm dependency update` - this will grab dependency, at specified version. In case of version change, it deleted old one and replaces it with newer.
+
+3. Extract library tarball:
+
+    `tar -xzf common-0.0.5.tar`
+
+4. In the `chartName/common/templates` one can see, the templates from library.
+
+#### Library use example
+
+Every chart manifest contains: apiVersion,  kind, and metadata. Let's use library for it.
+
+```yaml
+{{- template "common.deployment" (list . "demo.deployment") -}}
+{{- define "demodeployment" -}}
+{{- end}}
+spec:
+  ...
+```
+
+In this case 'common' is a library.
+
+[More on libraries](https://helm.sh/docs/topics/library_charts/)
+
+<hr>
+
+### Validating and packing charts
+
+Charts from repositories are signed. To check if downloaded chart is correct run `helm verify $chartName`.
+
+To package charts:
+
+1. Create gpg key.
+
+2. Package chart with key: `helm package --sign --key keyName --keyring /key/path`
+
+3. Now when chart will be changed without signing again, the `helm verify` would return error.
+
+<hr>
+
+### Helm adminsitration
+
+#### Role based access control
+
+Helm uses kubectl context for user resources. This might limit some users from performing helm operations.
+
+So in short - helm uses user's context to execute kubectl.
+
+#### Trublueshooting helm
+
+Well Helm contains of 3 major components:
+
+1. Helm binary
+
+    Issues might presents as: binary premissions, versions, access. Also interaction with kubectl and its configuration shloud be taken at consideration.
+
+2. Chart configuration
+
+    This might present as: syntax errors, checking output with --dry-run.
+
+3. Kubernetes
+
+    Questions to check includes: is cluster configured correctly? Are ones user is able to perform commands via kubectl?
+
+As said in previous section, role based access might be a issue at some point.
+
+To fix helm binary it is the easiest to reinstall it.
+
+### Helm Plugins
+
+HELM_PLUGINS env is accounted for the plugins install location.
+This directory contains all installed plugins.
+
+To find HELM_PLUGINS call `helm env`.
+
+#### Installing plugins
+
+via: `helm plugin install url` - this can point to any url or version control repo.
+
+#### Managin plugins
+
+`helm plugins list`
+`helm plugins uninstall pluginName`
+
+### Helm storage backend
+
+Helm has 3 types of sotrage backends:
+
+1. ConfigMap
+
+    Stores config information in configmaps.
+
+2. Secret
+
+    In Helm v3 this is a default storage backend. It is located in Helm namespace.
+
+    `helm list`
+    `kubectl get secret -l "owner=helm" --all-namespaces`
+    `kubectl get secret secret.name.v1 -o yaml`
+
+3. SQL
+
+    As for day 5.06.24 it supports only PostgreSQL. Reqiures configured connection string and deployed SQL instance
