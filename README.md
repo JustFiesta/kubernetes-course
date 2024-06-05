@@ -287,7 +287,11 @@ It supports templating via GO Templating. (Templating like jinja2 but start with
 
 Descriptors can be changes to helm charts. Chart needs to has its own directory, with Chart.yaml, templates/ and values.yaml (minimal setup). Also one can craete chart sketch by running `helm create chart $chartName`.
 
+Also charts can contain dependencies (subcharts) stored in template folder.
+
 #### Chart releases
+
+Release is a running chart. But also a normal release number.
 
 Charts also have releases. One can change it manually inside Chart.yaml file.
 
@@ -313,3 +317,29 @@ Now after Chart.yaml, values.yaml and template/serviceName.yaml are configured p
 * Install chart (package): `helm install $chartName`
 * Get chart from repo: `helm fetch $chartName`
 * Add Helm repository: `helm repo add $name $url`
+
+Also charts can be rollbacked to previous versions.
+
+<hr>
+
+#### Pre- and post- actions with hooks
+
+Like in git, hooks can run after some action.
+
+They are defined as normal template with special annotations, that define it as hook
+
+Hooks are part of chart. The parent chart cannot overide subchart's hooks.
+
+Hooks have weights - lower means first in execution. If this is not important, set it to 0.
+
+If hooks fails whole release fails.
+
+! Objects created by hooks are not a part of (chart) release. Administrator must keep in mind cleaning or tearing them down. When release is removed, hooks can presist.
+
+They can:
+
+* Load data
+
+* Manipulate data
+
+* Stage data
