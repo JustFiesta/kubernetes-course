@@ -2,6 +2,11 @@
 - hosts: all
   become: yes
   tasks:
+    - name: Update packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+
     - name: Install required packages
       package:
         name:

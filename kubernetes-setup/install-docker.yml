@@ -3,6 +3,12 @@
   become: yes
   become_method: sudo
   tasks:
+    tasks:
+    - name: Update packages
+      package:
+        upgrade: yes
+        update_cache: yes
+
     - name: Install packages
       package:
         name:
@@ -32,11 +38,11 @@
         executable: /bin/bash
 
     - name: Update apt cache
-      apt:
+      package:
         update_cache: yes
 
     - name: Install Docker
-      apt:
+      package:
         name:
           - docker-ce
           - docker-ce-cli
