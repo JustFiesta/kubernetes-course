@@ -60,6 +60,16 @@
     - name: Persist new kernel network bridge parameter
       shell: "sysctl -p"
 
+    - name: Load br_netfilter module
+      command: sudo modprobe br_netfilter
+      become: true
+
+    - name: Set net.ipv4.ip_forward to 1
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        state: present
+
     - name: Initialize Kubernetes cluster with kubeadm and cidr network for Flannel CNI (only on master)
       command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock
       when: "'master' in group_names"
