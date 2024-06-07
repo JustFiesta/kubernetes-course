@@ -3,7 +3,7 @@
   become: yes
   tasks:
     - name: Update packages
-      apt:
+      package:
         upgrade: yes
         update_cache: yes
 
@@ -58,8 +58,8 @@
         state: started
 
   post_tasks:
-    - name: Initialize Kubernetes cluster with kubeadm (only on master)
-      command: kubeadm init
+    - name: Initialize Kubernetes cluster with kubeadm and cidr network for Flanner CNI (only on master)
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16
       when: "'master' in group_names"
       register: kubeadm_init
 
@@ -71,12 +71,19 @@
       when: "'master' in group_names"
       become: false
 
-    - name: Install Calico network plugin (only on master)
-      command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
-      when: "'master' in group_names"
-
     - name: Join worker nodes to the cluster
       shell: "{{ item }}"
       with_items:
         - kubeadm join --token {{ kubeadm_init.results[0].stdout_lines[-1] }} {{ hostvars[groups['master'][0]].ansible_default_ipv4.address }}:6443 --discovery-token-ca-cert-hash sha256:{{ kubeadm_init.results[1].stdout_lines[-1] }}
       when: "'workers' in group_names"
+      
+    - name: Enable network bridge for Flanner CNI (net.bridge.bridge-nf-call-iptables)
+      shell: "echo \"net.bridge.bridge-nf-call-iptables=1 | sudo tee -a /etc/sysctl.conf\""
+    
+    - name: Persist new kernel network bridge parameter
+      shell: "sysctl -p"
+
+    - name: Install Flannel network plugin (only on master)
+      command: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml 
+      when: "'master' in group_names"
+
