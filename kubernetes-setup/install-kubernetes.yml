@@ -53,15 +53,9 @@
         force: yes
       register: result
 
-    - name: Ensure kubelet service is enabled and started
-      service:
-        name: kubelet
-        enabled: yes
-        state: started
-
   post_tasks:
-    - name: Initialize Kubernetes cluster with kubeadm and cidr network for Flanner CNI (only on master)
-      command: kubeadm init --pod-network-cidr=10.244.0.0/16
+    - name: Initialize Kubernetes cluster with kubeadm and cidr network for Flannel CNI (only on master)
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=/run/containerd/containerd.sock
       when: "'master' in group_names"
       register: kubeadm_init
 
