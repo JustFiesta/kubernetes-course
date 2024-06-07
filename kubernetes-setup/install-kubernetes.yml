@@ -1,6 +1,8 @@
 ---
 - hosts: all
   become: yes
+  vars_files:
+    - vars.yml
   tasks:
     - name: Update packages
       package:
@@ -17,15 +19,15 @@
           - lsb-release
         state: present
 
-    - name: Add Kubernetes apt repository GPG key
-      apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        state: present
-
+    - name: Get Kubernetes apt repository GPG key
+      shell: curl -fsSL {{ k8s_url_apt_key }} | gpg --dearmor -o {{ k8s_gpgpath }}
+      args:
+        creates: "{{ k8s_gpgpath }}"
+      
     - name: Add Kubernetes apt repository
       apt_repository:
-        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
-        state: present
+        filename: kubernetes
+        repo: "deb [signed-by={{ k8s_gpgpath }}] {{ k8s_repository }} /"
 
     - name: Update apt package index
       apt:
