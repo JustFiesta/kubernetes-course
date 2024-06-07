@@ -9,25 +9,31 @@
 
     - name: Install containerd
       package:
-        name: containerd.io
-        state: present
-
-    - name: Ensure containerd service is enabled and started
-      service:
         name: containerd
-        enabled: yes
-        state: started
-
-    - name: Configure containerd
-      blockinfile:
-        path: /etc/containerd/config.toml
-        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
-        block: |
+        state: present
+      notify: containerd restart
+            
+    - name: Create containerd config directory
+      file:
+        path: /etc/containerd
+        state: directory
+      
+    - name: Create containerd config file
+      copy:
+        dest: /etc/containerd/config.toml
+        content: |
           [plugins."io.containerd.grpc.v1.cri"]
             sandbox_image = "registry.k8s.io/pause:3.2"
 
           [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
               SystemdCgroup = true
-      loop:
-        - name: Override sandbox (pause) image
+      notify: containerd restart
+
+  handlers:
+    - name: run and enable containerd
+      service:
+        name: containerd
+        state: started
+        enabled: yes
+      listen: containerd restart
