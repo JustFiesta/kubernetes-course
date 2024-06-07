@@ -18,17 +18,45 @@
         path: /etc/containerd
         state: directory
       
+
     - name: Create containerd config file
       copy:
-        dest: /etc/containerd/config.toml
         content: |
+          version = 2
+
+          root = "/var/lib/containerd"
+          state = "/run/containerd"
+
+          [grpc]
+            address = "/run/containerd/containerd.sock"
+            uid = 0
+            gid = 0
+
+          [debug]
+            address = "/run/containerd/debug.sock"
+            uid = 0
+            gid = 0
+            level = "info"
+
+          [metrics]
+            address = ""
+            grpc_histogram = false
+
+          [cgroup]
+            path = ""
+
           [plugins."io.containerd.grpc.v1.cri"]
-            sandbox_image = "registry.k8s.io/pause:3.2"
+            default_runtime_name = "runc"
 
           [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
               SystemdCgroup = true
-      notify: containerd restart
+
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.other]
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.other.options]
+              SystemdCgroup = true
+        dest: /etc/containerd/config.toml
+      notify: containerd config changed
 
   handlers:
     - name: run and enable containerd
@@ -36,4 +64,10 @@
         name: containerd
         state: started
         enabled: yes
-      listen: containerd restart
+      listen: containerd installed
+
+    - name: reload containerd service
+      service:
+        name: containerd
+        state: reloaded
+      listen: containerd config changed
