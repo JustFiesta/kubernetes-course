@@ -81,5 +81,6 @@
 
     - name: Install Calico network plugin (only on master)
       command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
+      ignore_errors: true
       when: "'master' in group_names"
 
