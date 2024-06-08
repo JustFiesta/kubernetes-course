@@ -54,7 +54,7 @@
 
   post_tasks:
     - name: Initialize Kubernetes cluster with kubeadm and cidr network for Calico CNI (only on master)
-      command: kubeadm init --pod-network-cidr=192.168.0.0/16 --kubernetes-version {{ kubernetes_version }}
+      command: kubeadm init --pod-network-cidr=192.168.0.0/16 
       when: "'master' in group_names"
       register: kubeadm_init
 
