@@ -64,7 +64,7 @@
       become: false
 
     - name: Copy admin.conf to local kubeconfig
-      shell: sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      shell: sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
       when: "'master' in group_names"
       become: false
 
