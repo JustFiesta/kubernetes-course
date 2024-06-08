@@ -58,11 +58,18 @@
       when: "'master' in group_names"
       register: kubeadm_init
 
-    - name: Set up local kubeconfig (only on master)
-      command: |
-        mkdir -p $HOME/.kube &&
-        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config &&
-        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    - name: Create kubeconfig directory
+      shell: mkdir -p $HOME/.kube
+      when: "'master' in group_names"
+      become: false
+
+    - name: Copy admin.conf to local kubeconfig
+      shell: sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      when: "'master' in group_names"
+      become: false
+
+    - name: Change ownership of kubeconfig file
+      shell: sudo chown $(id -u):$(id -g) $HOME/.kube/config
       when: "'master' in group_names"
       become: false
 
