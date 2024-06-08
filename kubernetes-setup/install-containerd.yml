@@ -1,9 +1,11 @@
 ---
 - hosts: all
   become: yes
+  vars_files:
+    - vars.yml
   tasks:
     - name: Update packages
-      apt:
+      package:
         upgrade: yes
         update_cache: yes
 
@@ -33,9 +35,11 @@
     - name: Apply sysctl settings
       command: sysctl --system
 
-    - name: Add Docker’s official GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
+    - name: Install dependencies
+      apt:
+        name:
+          - ca-certificates
+          - curl
         state: present
 
     - name: Create Docker apt keyring directory
@@ -44,16 +48,18 @@
         state: directory
         mode: '0755'
 
-    - name: Download Docker GPG key and save it
+    - name: Download Docker's official gpg key
       get_url:
         url: https://download.docker.com/linux/ubuntu/gpg
-        dest: /etc/apt/keyrings/docker.gpg
-        mode: '0644'
+        dest: "{{ docker_gpgpath }}"
 
-    - name: Add Docker repository
-      apt_repository:
-        repo: deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
-        state: present
+    - name: Add Docker to the sources list
+      shell: "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null"
+
+    - name: Update packages
+      apt:
+        upgrade: yes
+        update_cache: yes
 
     - name: Install containerd.io
       apt:
