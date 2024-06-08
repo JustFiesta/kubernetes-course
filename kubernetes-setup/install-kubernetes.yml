@@ -80,6 +80,6 @@
       when: "'workers' in group_names"
 
     - name: Install Calico network plugin (only on master)
-      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml --validate=false
+      command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml --validate=false
       when: "'master' in group_names"
 
