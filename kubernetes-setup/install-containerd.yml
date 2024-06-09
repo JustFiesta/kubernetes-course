@@ -66,6 +66,13 @@
         name: containerd.io
         state: present
       notify: containerd restart
+    
+    - name: Install docker
+      apt:
+        name: docker
+        state: present
+      notify: docker restart
+      when: "'master' in group_names"
 
     - name: Create containerd config directory
       file:
@@ -92,3 +99,9 @@
         name: containerd
         state: restarted
         enabled: yes
+    - name: docker restart
+      systemd:
+        name: docker
+        state: restarted
+        enabled: yes
+
