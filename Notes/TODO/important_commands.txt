@@ -1,0 +1,23 @@
+Czyszczenie klastra:
+sudo kubeadm reset
+sudo rm -rf /etc/cni/net.d/
+
+
+Sprawdzanie przez 10 min stanu kubelet:
+end=$((SECONDS+600)); while [ $SECONDS -lt $end ]; do clear; date; kubectl version || { echo "kubectl version failed at $(date)"; exit 1; }; sleep 5; done
+
+
+Śledzenie dziennika:
+sudo journalctl -u kubelet -f
+
+
+Inne dzienniki:
+sudo journalctl -u kubelet --since "2 hours ago"
+sudo journalctl -u kubelet --since "2024-06-01 00:00:00"
+
+
+Zostało:
+	Konfiguracja CNI
+	Dodawanie workera
+	Deploy apki
+	*Opakowanie w Helm
