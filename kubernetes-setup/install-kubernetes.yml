@@ -72,15 +72,6 @@
       when: "'master' in group_names"
       become: false
 
-    - name: Install Calico network plugin (only on master)
-      pause:
-        prompt: |
-          Run this command to enable networking in cluster via Calico CNI:
-          
-          kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
-          
-          Press enter to continue...
-
     - name: Get join command
       shell: kubeadm token create --print-join-command
       register: join_command
@@ -93,4 +84,13 @@
 
           {{ join_command.stdout }}
 
+          Press enter to continue...
+
+    - name: Install Calico network plugin (only on master)
+      pause:
+        prompt: |
+          Run this command to enable networking in cluster via Calico CNI:
+          
+          kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+          
           Press enter to continue...
