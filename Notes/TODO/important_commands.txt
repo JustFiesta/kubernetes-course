@@ -16,8 +16,16 @@ sudo journalctl -u kubelet --since "2 hours ago"
 sudo journalctl -u kubelet --since "2024-06-01 00:00:00"
 
 
+Sprawdzenie serwisów na portach:
+sudo netstat -lnpt|grep kube
+
+
 Zostało:
 	Konfiguracja CNI
 	Dodawanie workera
 	Deploy apki
 	*Opakowanie w Helm
+
+Obecny problem:
+kube-apiserver przestaje działać po kilku minutach a z nim pozostałe (proxy, schedule).
+Błąd container network interface not found
