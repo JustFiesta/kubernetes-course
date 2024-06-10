@@ -28,4 +28,6 @@ Zostało:
 
 Obecny problem:
 kube-apiserver przestaje działać po kilku minutach a z nim pozostałe (proxy, schedule).
-Błąd container network interface not found
+Błąd container network interface not found.
+
+Przed dodaniem węzła i dodaniem CNI też ten sam błąd.
