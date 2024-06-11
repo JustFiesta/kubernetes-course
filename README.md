@@ -290,6 +290,9 @@ Descriptors can be changes to helm charts. Chart needs to has its own directory,
 
 Also charts can contain dependencies (subcharts) stored in template folder.
 
+[Helm setup](https://helm.sh/docs/intro/quickstart/)
+[More on charts](https://helm.sh/docs/topics/charts/)
+
 ### Chart releases
 
 Release is a running chart. But also a normal release number.
@@ -297,6 +300,8 @@ Release is a running chart. But also a normal release number.
 Charts also have releases. One can change it manually inside Chart.yaml file.
 
 Or update running chart: `helm upgrade $chartName -set alpineimage=1.1.6`
+
+ [Versioning](https://helm.sh/docs/topics/charts/#charts-and-versioning)
 
 <hr>
 
@@ -307,6 +312,8 @@ After minimal chart is created, move manifest file into `chartName/templates/`.
 Here one can add templating functionality to manifest, using GO templating.
 
 Now after Chart.yaml, values.yaml and template/serviceName.yaml are configured properly, command `helm install $chartName --dry-run` shlould output the same service manifest as Kubernetes one, but with dynamic values.
+
+[Convert to charts](https://jhooq.com/convert-kubernetes-yaml-into-helm/)
 
 <hr>
 
